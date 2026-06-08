@@ -30,7 +30,28 @@ from flash_head.inference import (
 OUTPUT_DIR = "outputs"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+print("STARTUP TEST")
+
+print(
+    "MODEL DIR EXISTS:",
+    os.path.exists(
+        "/workspace/SoulX-FlashHead/models/SoulX-FlashHead-1_3B"
+    )
+)
+
+print(
+    "WAV2VEC DIR EXISTS:",
+    os.path.exists(
+        "/workspace/SoulX-FlashHead/models/wav2vec2-base-960h"
+    )
+)
+
+raise RuntimeError("INTENTIONAL_STARTUP_TEST")
+
 print("Loading SoulX pipeline...")
+
+
+
 
 pipeline = get_pipeline(
     world_size=1,
