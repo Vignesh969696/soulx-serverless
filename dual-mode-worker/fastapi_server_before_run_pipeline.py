@@ -1,0 +1,174 @@
+from fastapi import FastAPI, UploadFile, File
+from flash_head.inference import (
+    get_pipeline,
+    get_base_data,
+    get_infer_params,
+    get_audio_embedding,
+    run_pipeline,
+)
+
+import os
+import shutil
+from datetime import datetime
+import torch
+import numpy as np
+import librosa
+import time
+import subprocess
+import imageio
+from collections import deque
+
+app = FastAPI()
+
+pipeline = None
+
+UPLOAD_DIR = "uploads"
+OUTPUT_DIR = "outputs"
+
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+def save_video(frames_list, video_path, audio_path, fps):
+    temp_video_path = video_path.replace(".mp4", "_tmp.mp4")
+
+    with imageio.get_writer(
+        temp_video_path,
+        format="mp4",
+        mode="I",
+        fps=fps,
+        codec="h264",
+        ffmpeg_params=["-bf", "0"]
+    ) as writer:
+
+        for frames in frames_list:
+            frames = frames.numpy().astype(np.uint8)
+
+            for i in range(frames.shape[0]):
+                writer.append_data(frames[i])
+
+    cmd = [
+        "ffmpeg",
+        "-i", temp_video_path,
+        "-i", audio_path,
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
+        video_path,
+        "-y"
+    ]
+
+    subprocess.run(cmd)
+
+    os.remove(temp_video_path)
+
+
+@app.on_event("startup")
+def startup_event():
+    global pipeline
+
+    print("Loading SoulX pipeline...")
+
+    pipeline = get_pipeline(
+        world_size=1,
+        ckpt_dir="models/SoulX-FlashHead-1_3B",
+        wav2vec_dir="models/wav2vec2-base-960h",
+        model_type="lite"
+    )
+
+    print("SoulX pipeline loaded.")
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}
+
+@app.get("/pipeline-status")
+def pipeline_status():
+    return {
+        "loaded": pipeline is not None
+    }
+
+@app.post("/generate")
+async def generate(
+    image: UploadFile = File(...),
+    audio: UploadFile = File(...)
+):
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    image_path = os.path.join(
+        UPLOAD_DIR,
+        f"{timestamp}_{image.filename}"
+    )
+
+    audio_path = os.path.join(
+        UPLOAD_DIR,
+        f"{timestamp}_{audio.filename}"
+    )
+
+    with open(image_path, "wb") as f:
+        shutil.copyfileobj(image.file, f)
+
+    with open(audio_path, "wb") as f:
+        shutil.copyfileobj(audio.file, f)
+
+
+
+    get_base_data(
+        pipeline,
+        cond_image_path_or_dir=image_path,
+        base_seed=42,
+        use_face_crop=False
+    )
+
+    infer_params = get_infer_params()
+
+    sample_rate = infer_params["sample_rate"]
+    tgt_fps = infer_params["tgt_fps"]
+    cached_audio_duration = infer_params["cached_audio_duration"]
+    frame_num = infer_params["frame_num"]
+    motion_frames_num = infer_params["motion_frames_num"]
+
+    slice_len = frame_num - motion_frames_num
+
+    human_speech_array_all, _ = librosa.load(
+        audio_path,
+        sr=sample_rate,
+        mono=True
+    )
+
+    human_speech_array_slice_len = (
+        slice_len * sample_rate // tgt_fps
+    )
+
+    cached_audio_length_sum = (
+        sample_rate * cached_audio_duration
+    )
+
+    audio_end_idx = cached_audio_duration * tgt_fps
+    audio_start_idx = audio_end_idx - frame_num
+
+    audio_dq = deque(
+        [0.0] * cached_audio_length_sum,
+        maxlen=cached_audio_length_sum
+    )
+
+    audio_dq.extend(
+        human_speech_array_all[:human_speech_array_slice_len].tolist()
+    )
+
+    audio_array = np.array(audio_dq)
+
+    audio_embedding = get_audio_embedding(
+        pipeline,
+        audio_array,
+        audio_start_idx,
+        audio_end_idx
+    )
+
+    return {
+        "audio_embedding_shape": str(audio_embedding.shape),
+        "audio_samples": len(human_speech_array_all)
+    }
+
+
+
+   

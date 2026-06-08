@@ -336,4 +336,4 @@ with gr.Blocks(title="SoulX-FlashHead 流式视频生成", theme=gr.themes.Soft(
     )
 
 if __name__ == "__main__":
-    app.launch()
+    app.launch(share=True)

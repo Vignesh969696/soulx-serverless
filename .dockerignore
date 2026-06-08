@@ -1,0 +1,15 @@
+.git
+.gradio
+__pycache__/
+gradio_results/
+*.mp4
+*.wav
+
+gpu_info.txt
+python_info.txt
+repository_files.txt
+working_environment.txt
+important_packages.txt
+
+models/SoulX-FlashHead-1_3B
+models/wav2vec2-base-960h
