@@ -46,8 +46,6 @@ print(
     )
 )
 
-raise RuntimeError("INTENTIONAL_STARTUP_TEST")
-
 print("Loading SoulX pipeline...")
 
 
