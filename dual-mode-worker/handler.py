@@ -1,3 +1,8 @@
+print("HANDLER FILE EXECUTED")
+
+import os
+print("PWD:", os.getcwd())
+
 import os
 import sys
 import time
