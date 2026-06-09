@@ -7,4 +7,4 @@ RUN pip install --break-system-packages --no-cache-dir -r /tmp/worker_requiremen
 
 COPY . .
 
-CMD ["python", "-u", "dual-mode-worker/handler.py"]
+CMD ["bash","-c", "echo DOCKER_STARTUP_TEST && sleep 3600"]
