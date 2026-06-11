@@ -1,0 +1,236 @@
+SOULX RECOVERY NOTES
+Verified Working State: 2026-06-11
+
+Git Repository:
+https://github.com/Vignesh969696/soulx-serverless
+
+Working Tag:
+SOULX_WORKING_RUNPOD_2026_06_11
+
+Working Commit:
+eb6741b92af145268ad9e09df7a06a2f664dd012
+
+Purpose:
+This document records the exact state of the SoulX deployment that was verified to work end-to-end on RunPod on 2026-06-11.
+
+---
+
+## VERIFIED WORKING FEATURES
+
+Successfully verified:
+
+* FastAPI backend startup
+* SoulX pipeline loading
+* RunPod proxy access
+* Angular frontend integration
+* /ping endpoint
+* /pipeline-status endpoint
+* Sample video generation
+* Final lip-sync video generation
+* Video download endpoint
+* End-to-end frontend → backend → inference → download workflow
+
+Sample generation and final lip-sync generation both completed successfully and produced playable MP4 videos.
+
+---
+
+## MODEL FILES
+
+Model directory:
+
+models/
+
+Verified model sizes:
+
+models/SoulX-FlashHead-1_3B
+Approximate size: 14 GB
+
+models/wav2vec2-base-960h
+Approximate size: 1.1 GB
+
+Total model storage:
+Approximate size: 15 GB
+
+These model files are NOT stored in GitHub.
+
+If persistent storage is deleted, the model files must be downloaded again.
+
+---
+
+## FINAL WORKING PYTHON PACKAGE STATE
+
+Observed working packages:
+
+torch==2.8.0+cu128
+torchvision==0.23.0+cu128
+torchaudio==2.8.0+cu128
+xfuser==0.4.5
+
+Observed working state:
+
+No xformers package installed.
+
+---
+
+## IMPORTANT XFORMERS NOTE
+
+xformers 0.0.31 caused import failures after the environment was upgraded to torch 2.8.0+cu128.
+
+Observed error:
+
+undefined symbol:
+_ZN3c104cuda9SetDeviceEa
+
+The following command resolved the import issue:
+
+pip uninstall -y xformers
+
+After removing xformers:
+
+python -c "
+from flash_head.inference import get_pipeline
+print('IMPORT_OK')
+"
+
+produced:
+
+IMPORT_OK
+
+Note:
+This does NOT mean all future xformers versions are incompatible.
+
+It only confirms that the installed xformers build at the time was incompatible with the final torch installation.
+
+---
+
+## FASTAPI SERVER
+
+Backend launch command:
+
+uvicorn dual-mode-worker.fastapi_server:app --host 0.0.0.0 --port 8000
+
+Expected startup behavior:
+
+* FastAPI starts successfully
+* SoulX pipeline loads successfully
+* No import errors
+* Server listens on port 8000
+
+---
+
+## HEALTH CHECKS
+
+Health endpoint:
+
+curl http://127.0.0.1:8000/ping
+
+Expected response:
+
+{"status":"ok"}
+
+Pipeline status endpoint:
+
+curl http://127.0.0.1:8000/pipeline-status
+
+Expected response:
+
+{"loaded":true}
+
+---
+
+## RUNPOD PROXY NOTES
+
+Verified working RunPod hostname:
+
+https://0pe9qvg4l712lc-8000.proxy.runpod.net
+
+A similar hostname was encountered during debugging and returned 404 errors:
+
+https://0pe9qvg417121c-8000.proxy.runpod.net
+
+Be careful when copying RunPod URLs.
+
+---
+
+## FRONTEND STATUS
+
+Angular frontend was verified operational.
+
+Workflow successfully tested:
+
+1. Upload avatar image
+2. Upload audio
+3. Generate sample video
+4. Approve sample
+5. Enter text
+6. Generate final lip-sync video
+7. Download/play resulting MP4
+
+All steps completed successfully.
+
+---
+
+## RECOVERY PROCEDURE
+
+If recreating from scratch:
+
+1. Create a new RunPod pod.
+2. Clone repository.
+3. Checkout tag:
+
+git checkout SOULX_WORKING_RUNPOD_2026_06_11
+
+4. Download model files:
+
+   * SoulX-FlashHead-1_3B
+   * wav2vec2-base-960h
+
+5. Reinstall dependencies.
+
+6. Verify package versions using:
+
+   * WORKING_REQUIREMENTS_2026_06_11.txt
+   * working_environment_WORKING_2026_06_11.txt
+   * final_environment_snapshot_WORKING_2026_06_11.txt
+
+7. If import errors reference xformers:
+
+   * Verify torch version
+   * Remove incompatible xformers installation
+
+8. Run import test:
+
+python -c "
+from flash_head.inference import get_pipeline
+print('IMPORT_OK')
+"
+
+9. Start FastAPI server.
+
+10. Verify:
+
+    * /ping
+    * /pipeline-status
+
+11. Test sample generation.
+
+---
+
+## BACKUP FILES PRESENT IN GITHUB
+
+WORKING_REQUIREMENTS_2026_06_11.txt
+
+working_environment_WORKING_2026_06_11.txt
+
+final_environment_snapshot_WORKING_2026_06_11.txt
+
+dual-mode-worker/fastapi_server_WORKING_2026_06_11.py
+
+Tag:
+
+SOULX_WORKING_RUNPOD_2026_06_11
+
+---
+
+## END OF DOCUMENT
+
