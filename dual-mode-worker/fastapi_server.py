@@ -84,8 +84,8 @@ def startup_event():
 
     pipeline = get_pipeline(
         world_size=1,
-        ckpt_dir="models/SoulX-FlashHead-1_3B",
-        wav2vec_dir="models/wav2vec2-base-960h",
+        ckpt_dir="/workspace/models/SoulX-FlashHead-1_3B",
+        wav2vec_dir="/workspace/models/wav2vec2-base-960h",
         model_type="lite"
     )
 
