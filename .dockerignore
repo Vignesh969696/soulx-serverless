@@ -13,3 +13,5 @@ important_packages.txt
 
 models/SoulX-FlashHead-1_3B
 models/wav2vec2-base-960h
+outputs/
+uploads/
