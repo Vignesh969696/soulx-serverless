@@ -1,0 +1,16 @@
+1. pip install xfuser==0.4.5 --no-deps
+
+2. pip install torch==2.7.1+cu128 torchvision==0.22.1+cu128 torchaudio==2.7.1+cu128 --index-url https://download.pytorch.org/whl/cu128
+
+3. pip install -r requirements_no_xformers.txt
+
+4. pip install xformers==0.0.31
+
+5. pip install hf_transfer
+
+6. Download models:
+   - SoulX-FlashHead-1_3B
+   - wav2vec2-base-960h
+
+7. Start server:
+   uvicorn dual-mode-worker.fastapi_server:app --host 0.0.0.0 --port 8000
