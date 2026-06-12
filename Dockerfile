@@ -29,4 +29,4 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["sleep", "infinity"]
+CMD ["./docker-entrypoint.sh"]
