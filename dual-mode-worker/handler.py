@@ -1,19 +1,17 @@
-print("HANDLER FILE EXECUTED")
-
-import os
-print("PWD:", os.getcwd())
-
 import os
 import sys
 import time
+import uuid
+import base64
+import tempfile
 import subprocess
 import imageio
 import librosa
 import numpy as np
 import torch
+import runpod
 
 from collections import deque
-from datetime import datetime
 
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..")
@@ -21,8 +19,6 @@ PROJECT_ROOT = os.path.abspath(
 
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
-
-import runpod
 
 from flash_head.inference import (
     get_pipeline,
@@ -32,34 +28,18 @@ from flash_head.inference import (
     run_pipeline,
 )
 
-OUTPUT_DIR = "outputs"
+MODEL_DIR = "/workspace/models/SoulX-FlashHead-1_3B"
+WAV2VEC_DIR = "/workspace/models/wav2vec2-base-960h"
+OUTPUT_DIR = "/workspace/outputs"
+
 os.makedirs(OUTPUT_DIR, exist_ok=True)
-
-print("STARTUP TEST")
-
-print(
-    "MODEL DIR EXISTS:",
-    os.path.exists(
-        "/workspace/SoulX-FlashHead/models/SoulX-FlashHead-1_3B"
-    )
-)
-
-print(
-    "WAV2VEC DIR EXISTS:",
-    os.path.exists(
-        "/workspace/SoulX-FlashHead/models/wav2vec2-base-960h"
-    )
-)
 
 print("Loading SoulX pipeline...")
 
-
-
-
 pipeline = get_pipeline(
     world_size=1,
-    ckpt_dir="models/SoulX-FlashHead-1_3B",
-    wav2vec_dir="models/wav2vec2-base-960h",
+    ckpt_dir=MODEL_DIR,
+    wav2vec_dir=WAV2VEC_DIR,
     model_type="lite"
 )
 
@@ -84,31 +64,45 @@ def save_video(frames_list, video_path, audio_path, fps):
             for i in range(frames.shape[0]):
                 writer.append_data(frames[i])
 
-    cmd = [
-        "ffmpeg",
-        "-i", temp_video_path,
-        "-i", audio_path,
-        "-c:v", "copy",
-        "-c:a", "aac",
-        "-shortest",
-        video_path,
-        "-y"
-    ]
-
-    subprocess.run(cmd)
+    subprocess.run(
+        [
+            "ffmpeg",
+            "-i", temp_video_path,
+            "-i", audio_path,
+            "-c:v", "copy",
+            "-c:a", "aac",
+            "-shortest",
+            video_path,
+            "-y"
+        ],
+        check=True
+    )
 
     os.remove(temp_video_path)
 
 
 def handler(job):
 
-    print("Received job:")
-    print(job)
+    image_base64 = job["input"]["image_base64"]
+    audio_base64 = job["input"]["audio_base64"]
 
-    image_path = job["input"]["image_path"]
-    audio_path = job["input"]["audio_path"]
+    request_id = str(uuid.uuid4())
 
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    image_path = os.path.join(
+        tempfile.gettempdir(),
+        f"{request_id}.png"
+    )
+
+    audio_path = os.path.join(
+        tempfile.gettempdir(),
+        f"{request_id}.mp3"
+    )
+
+    with open(image_path, "wb") as f:
+        f.write(base64.b64decode(image_base64))
+
+    with open(audio_path, "wb") as f:
+        f.write(base64.b64decode(audio_base64))
 
     get_base_data(
         pipeline,
@@ -149,12 +143,16 @@ def handler(job):
         maxlen=cached_audio_length_sum
     )
 
-    remainder = len(human_speech_array_all) % human_speech_array_slice_len
+    remainder = (
+        len(human_speech_array_all)
+        % human_speech_array_slice_len
+    )
 
     if remainder > 0:
 
         pad_length = (
-            human_speech_array_slice_len - remainder
+            human_speech_array_slice_len
+            - remainder
         )
 
         human_speech_array_all = np.concatenate(
@@ -167,9 +165,11 @@ def handler(job):
             ]
         )
 
-    human_speech_array_slices = human_speech_array_all.reshape(
-        -1,
-        human_speech_array_slice_len
+    human_speech_array_slices = (
+        human_speech_array_all.reshape(
+            -1,
+            human_speech_array_slice_len
+        )
     )
 
     generated_list = []
@@ -208,7 +208,7 @@ def handler(job):
 
     output_path = os.path.join(
         OUTPUT_DIR,
-        f"{timestamp}.mp4"
+        f"{request_id}.mp4"
     )
 
     save_video(
@@ -218,13 +218,23 @@ def handler(job):
         tgt_fps
     )
 
+    with open(output_path, "rb") as f:
+        video_base64 = base64.b64encode(
+            f.read()
+        ).decode("utf-8")
+
+    os.remove(image_path)
+    os.remove(audio_path)
+
     return {
         "status": "completed",
-        "video_path": output_path,
-        "generation_time": elapsed
+        "generation_time": elapsed,
+        "video_base64": video_base64
     }
 
 
-runpod.serverless.start({
-    "handler": handler
-})
+runpod.serverless.start(
+    {
+        "handler": handler
+    }
+)
