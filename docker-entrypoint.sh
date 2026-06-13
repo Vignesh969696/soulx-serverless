@@ -1,15 +1,15 @@
 #!/bin/bash
 set -e
 
-echo "Checking models..."
+echo "Checking model directories..."
 
 if [ ! -d "/workspace/models/SoulX-FlashHead-1_3B" ]; then
-    echo "ERROR: SoulX model not found"
+    echo "ERROR: /workspace/models/SoulX-FlashHead-1_3B not found"
     exit 1
 fi
 
 if [ ! -d "/workspace/models/wav2vec2-base-960h" ]; then
-    echo "ERROR: wav2vec model not found"
+    echo "ERROR: /workspace/models/wav2vec2-base-960h not found"
     exit 1
 fi
 
