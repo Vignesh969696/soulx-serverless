@@ -218,10 +218,6 @@ def handler(job):
         tgt_fps
     )
 
-    with open(output_path, "rb") as f:
-        video_base64 = base64.b64encode(
-            f.read()
-        ).decode("utf-8")
 
     os.remove(image_path)
     os.remove(audio_path)
@@ -229,7 +225,7 @@ def handler(job):
     return {
         "status": "completed",
         "generation_time": elapsed,
-        "video_base64": video_base64
+        "video_path": output_path
     }
 
 
