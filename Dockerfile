@@ -27,6 +27,4 @@ RUN chmod +x docker-entrypoint.sh
 
 COPY . .
 
-EXPOSE 8000
-
 CMD ["./docker-entrypoint.sh"]
