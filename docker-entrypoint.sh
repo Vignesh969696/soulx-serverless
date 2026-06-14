@@ -1,20 +1,25 @@
-#!/bin/bash
+#!/bin/bash 
 set -e
 
-echo "Checking model directories..."
+mkdir -p /workspace/models
 
 if [ ! -d "/workspace/models/SoulX-FlashHead-1_3B" ]; then
-    echo "ERROR: /workspace/models/SoulX-FlashHead-1_3B not found"
-    exit 1
+    echo "Downloading SoulX model..."
+    hf download \
+        Soul-AILab/SoulX-FlashHead-1_3B \
+        --local-dir /workspace/models/SoulX-FlashHead-1_3B
 fi
 
 if [ ! -d "/workspace/models/wav2vec2-base-960h" ]; then
-    echo "ERROR: /workspace/models/wav2vec2-base-960h not found"
-    exit 1
+    echo "Downloading wav2vec model..."
+    hf download \
+        facebook/wav2vec2-base-960h \
+        --local-dir /workspace/models/wav2vec2-base-960h
 fi
 
-mkdir -p /workspace/outputs
+echo "Starting FastAPI..."
 
-echo "Starting RunPod Serverless Worker..."
+uvicorn dual-mode-worker.fastapi_server:app \
+    --host 0.0.0.0 \
+    --port 8000
 
-python dual-mode-worker/handler.py
