@@ -1,14 +1,14 @@
 print("START")
 
 import torch
-
 print("TORCH IMPORTED")
 
 def handler(job):
     print("HANDLER")
+    print(job)
+
     return {
-        "cuda": torch.cuda.is_available(),
-        "device_count": torch.cuda.device_count()
+        "received": job
     }
 
 import runpod
