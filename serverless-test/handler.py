@@ -1,13 +1,16 @@
-print("STARTING FILE")
+print("START")
 
-import runpod
+import torch
 
-print("IMPORTED RUNPOD")
+print("TORCH IMPORTED")
 
 def handler(job):
-    print("HANDLER CALLED")
-    return {"message": "hello"}
+    print("HANDLER")
+    return {
+        "cuda": torch.cuda.is_available(),
+        "device_count": torch.cuda.device_count()
+    }
 
-print("REGISTERING")
+import runpod
 
 runpod.serverless.start({"handler": handler})
