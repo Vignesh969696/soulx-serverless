@@ -6,4 +6,6 @@ RUN pip install runpod
 
 COPY serverless-test/handler.py .
 
+ENTRYPOINT []
+
 CMD ["python", "handler.py"]
