@@ -9,12 +9,11 @@ print("TORCH IMPORTED")
 import runpod
 print("RUNPOD IMPORTED")
 
-
 def handler(job):
     print("HANDLER CALLED")
 
     return {
-        "torch_version": torch.__version__
+        "cuda_available": torch.cuda.is_available()
     }
 
 print("REGISTERING")
