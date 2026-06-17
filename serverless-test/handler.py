@@ -9,9 +9,13 @@ print("TORCH IMPORTED")
 import runpod
 print("RUNPOD IMPORTED")
 
+
 def handler(job):
     print("HANDLER CALLED")
-    return {"ok": True}
+
+    return {
+        "torch_version": torch.__version__
+    }
 
 print("REGISTERING")
 runpod.serverless.start({"handler": handler})
