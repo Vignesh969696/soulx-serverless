@@ -6,14 +6,12 @@ print("TORCH IMPORTED")
 import runpod
 print("RUNPOD IMPORTED")
 
-
 def handler(job):
     print("HANDLER CALLED")
+    print(job)
 
-    return {
-        "cuda_available": torch.cuda.is_available()
-    }
-
+    return job
+    
 
 print("REGISTERING")
 runpod.serverless.start({"handler": handler})
