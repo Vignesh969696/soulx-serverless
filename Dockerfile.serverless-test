@@ -1,0 +1,11 @@
+FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
+
+WORKDIR /app
+
+RUN pip install runpod
+
+COPY serverless-test/handler.py .
+
+ENTRYPOINT []
+
+CMD ["python", "handler.py"]
