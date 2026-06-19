@@ -18,6 +18,9 @@ RUN pip install --break-system-packages --no-cache-dir \
     -r requirements_no_xformers.txt
 
 RUN pip install --break-system-packages --no-cache-dir \
+    xformers==0.0.31
+
+RUN pip install --break-system-packages --no-cache-dir \
     hf_transfer
 
 COPY serverless-test/handler.py .
