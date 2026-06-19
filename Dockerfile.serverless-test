@@ -1,7 +1,20 @@
 FROM runpod/pytorch:1.0.2-cu1281-torch280-ubuntu2404
 
 WORKDIR /app
-RUN pip install runpod hf_transfer
+
+RUN pip install runpod
+
+RUN pip install --break-system-packages --no-cache-dir \
+    xfuser==0.4.5 --no-deps
+
+RUN pip install --break-system-packages --no-cache-dir \
+    torch==2.7.1+cu128 \
+    torchvision==0.22.1+cu128 \
+    torchaudio==2.7.1+cu128 \
+    --index-url https://download.pytorch.org/whl/cu128
+
+RUN pip install --break-system-packages --no-cache-dir \
+    hf_transfer
 
 COPY serverless-test/handler.py .
 
