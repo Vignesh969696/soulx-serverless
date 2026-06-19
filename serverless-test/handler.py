@@ -8,7 +8,7 @@ def handler(job):
     print("HANDLER CALLED")
 
     return {
-        "I_AM_THE_HANDLER": 12345
+        "version": 999
     }
 
 
