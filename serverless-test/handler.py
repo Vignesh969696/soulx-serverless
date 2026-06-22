@@ -5,6 +5,9 @@ import runpod
 print("START", flush=True)
 
 print("CWD:", os.getcwd(), flush=True)
+
+sys.path.insert(0, "/app")
+
 print("PATH:", sys.path, flush=True)
 print("APP CONTENTS:", os.listdir("/app"), flush=True)
 
