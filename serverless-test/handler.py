@@ -26,13 +26,27 @@ print(
 try:
     from flash_head.inference import get_pipeline
     print("FLASH_HEAD IMPORTED", flush=True)
+
+    print("LOADING PIPELINE", flush=True)
+
+    pipeline = get_pipeline(
+        world_size=1,
+        ckpt_dir="/runpod-volume/models/SoulX-FlashHead-1_3B",
+        wav2vec_dir="/runpod-volume/models/wav2vec2-base-960h",
+        model_type="lite"
+    )
+
+    print("PIPELINE LOADED", flush=True)
+
 except Exception as e:
-    print("FLASH_HEAD IMPORT FAILED:", e, flush=True)
+    print("PIPELINE LOAD FAILED:", e, flush=True)
     raise
 
 
 def handler(job):
-    return {"ok": True}
+    return {
+        "pipeline_loaded": pipeline is not None
+    }
 
 
 print("REGISTERING", flush=True)
