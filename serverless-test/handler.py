@@ -24,8 +24,23 @@ print(
 )
 
 try:
-    from flash_head.inference import get_pipeline
-    print("FLASH_HEAD IMPORTED", flush=True)
+    from flash_head.inference import (
+        get_pipeline,
+        get_base_data,
+        get_infer_params,
+        get_audio_embedding,
+        run_pipeline,
+    )
+
+    import torch
+    import numpy as np
+    import librosa
+    import time
+    import subprocess
+    import imageio
+    from collections import deque
+
+    print("ALL IMPORTS WORK", flush=True)
 
     print("LOADING PIPELINE", flush=True)
 
@@ -39,7 +54,7 @@ try:
     print("PIPELINE LOADED", flush=True)
 
 except Exception as e:
-    print("PIPELINE LOAD FAILED:", e, flush=True)
+    print("SETUP FAILED:", e, flush=True)
     raise
 
 
