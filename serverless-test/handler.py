@@ -37,6 +37,7 @@ try:
     import librosa
     import time
     import subprocess
+    import base64
     import imageio
     from collections import deque
 
@@ -208,13 +209,26 @@ def handler(job):
         tgt_fps
     )
 
+
     print("VIDEO SAVED", flush=True)
 
+    with open(output_path, "rb") as f:
+        video_bytes = f.read()
+
+    print("VIDEO READ INTO MEMORY", flush=True)
+
+    video_b64 = base64.b64encode(video_bytes).decode()
+    print("VIDEO ENCODED", flush=True)
+    print("BASE64 LENGTH:", len(video_b64), flush=True)
+
+
     return {
-        "exists": os.path.exists(output_path),
-        "size": os.path.getsize(output_path),
-        "chunks": len(human_speech_array_slices)
+        "exists": True,
+        "size": len(video_bytes),
+        "chunks": len(human_speech_array_slices),
+        "video": video_b64
     }
+
 
 
 
