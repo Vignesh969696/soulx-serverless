@@ -57,6 +57,41 @@ except Exception as e:
     print("SETUP FAILED:", e, flush=True)
     raise
 
+
+def save_video(frames_list, video_path, audio_path, fps):
+    temp_video_path = video_path.replace(".mp4", "_tmp.mp4")
+
+    with imageio.get_writer(
+        temp_video_path,
+        format="mp4",
+        mode="I",
+        fps=fps,
+        codec="h264",
+        ffmpeg_params=["-bf", "0"]
+    ) as writer:
+
+        for frames in frames_list:
+            frames = frames.numpy().astype(np.uint8)
+
+            for i in range(frames.shape[0]):
+                writer.append_data(frames[i])
+
+    cmd = [
+        "ffmpeg",
+        "-i", temp_video_path,
+        "-i", audio_path,
+        "-c:v", "copy",
+        "-c:a", "aac",
+        "-shortest",
+        video_path,
+        "-y"
+    ]
+
+    subprocess.run(cmd, check=True)
+
+    os.remove(temp_video_path)
+
+
 def handler(job):
 
     image_path = "/app/serverless-test/test.jpg"
@@ -127,34 +162,60 @@ def handler(job):
         human_speech_array_slice_len
     )
 
-    print("GETTING AUDIO EMBEDDING", flush=True)
+    print("GENERATING VIDEO", flush=True)
 
-    human_speech_array = human_speech_array_slices[0]
+    generated_list = []
 
-    audio_dq.extend(
-        human_speech_array.tolist()
+    for chunk_idx, human_speech_array in enumerate(
+        human_speech_array_slices
+    ):
+
+        audio_dq.extend(
+            human_speech_array.tolist()
+        )
+
+        audio_array = np.array(audio_dq)
+
+        audio_embedding = get_audio_embedding(
+            pipeline,
+            audio_array,
+            audio_start_idx,
+            audio_end_idx
+        )
+
+        video = run_pipeline(
+            pipeline,
+            audio_embedding
+        )
+
+        video = video[motion_frames_num:]
+
+        generated_list.append(
+            video.cpu()
+        )
+
+    torch.cuda.synchronize()
+
+    output_path = "/tmp/test.mp4"
+
+    print("SAVING VIDEO", flush=True)
+
+    print("NUMBER OF GENERATED CHUNKS:", len(generated_list), flush=True)
+    save_video(
+        generated_list,
+        output_path,
+        audio_path,
+        tgt_fps
     )
 
-    audio_array = np.array(audio_dq)
-
-    audio_embedding = get_audio_embedding(
-        pipeline,
-        audio_array,
-        audio_start_idx,
-        audio_end_idx
-    )
-
-    print("RUNNING PIPELINE", flush=True)
-
-    video = run_pipeline(
-        pipeline,
-        audio_embedding
-    )
+    print("VIDEO SAVED", flush=True)
 
     return {
-        "video_shape": list(video.shape),
+        "exists": os.path.exists(output_path),
+        "size": os.path.getsize(output_path),
         "chunks": len(human_speech_array_slices)
     }
+
 
 
 print("REGISTERING", flush=True)
