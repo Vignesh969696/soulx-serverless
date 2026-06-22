@@ -1,14 +1,13 @@
 print("START", flush=True)
 
+import os
+import sys
 import runpod
-print("RUNPOD IMPORTED", flush=True)
 
-try:
-    from flash_head.inference import get_pipeline
-    print("FLASH_HEAD IMPORTED", flush=True)
-except Exception as e:
-    print("FLASH_HEAD IMPORT FAILED:", e, flush=True)
-    raise
+print("RUNPOD IMPORTED", flush=True)
+print("CWD:", os.getcwd(), flush=True)
+print("PATH:", sys.path, flush=True)
+print("APP CONTENTS:", os.listdir("/app"), flush=True)
 
 def handler(job):
     return {"ok": True}
