@@ -95,8 +95,26 @@ def save_video(frames_list, video_path, audio_path, fps):
 
 def handler(job):
 
-    image_path = "/app/serverless-test/test.jpg"
-    audio_path = "/app/serverless-test/test.wav"
+    image_b64 = job["input"].get("image")
+    audio_b64 = job["input"].get("audio")
+
+    if image_b64 is None or audio_b64 is None:
+        raise ValueError("Missing image or audio in job input")
+
+    image_bytes = base64.b64decode(image_b64)
+    audio_bytes = base64.b64decode(audio_b64)
+
+    image_path = "/tmp/input.jpg"
+    audio_path = "/tmp/input.wav"
+
+    with open(image_path, "wb") as f:
+        f.write(image_bytes)
+
+    with open(audio_path, "wb") as f:
+        f.write(audio_bytes)
+
+    print("INPUT FILES WRITTEN", flush=True)
+    
 
     print("CALLING get_base_data", flush=True)
 
@@ -219,13 +237,9 @@ def handler(job):
 
     video_b64 = base64.b64encode(video_bytes).decode()
     print("VIDEO ENCODED", flush=True)
-    print("BASE64 LENGTH:", len(video_b64), flush=True)
 
 
     return {
-        "exists": True,
-        "size": len(video_bytes),
-        "chunks": len(human_speech_array_slices),
         "video": video_b64
     }
 
