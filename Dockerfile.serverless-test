@@ -14,6 +14,7 @@ RUN pip install --break-system-packages --no-cache-dir \
     torchvision==0.22.1+cu128 \
     torchaudio==2.7.1+cu128 \
     --index-url https://download.pytorch.org/whl/cu128
+
 RUN pip install --break-system-packages --no-cache-dir \
     -r requirements_no_xformers.txt
 
@@ -23,8 +24,8 @@ RUN pip install --break-system-packages --no-cache-dir \
 RUN pip install --break-system-packages --no-cache-dir \
     hf_transfer
 
-COPY serverless-test/handler.py .
+COPY . .
 
 ENTRYPOINT []
 
-CMD ["python", "handler.py"]
+CMD ["python", "serverless-test/handler.py"]
